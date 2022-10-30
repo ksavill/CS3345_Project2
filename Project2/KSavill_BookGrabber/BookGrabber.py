@@ -2,6 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from dearpygui import dearpygui as dpg
+import os
+import csv
 # potential resource for improving this script https://www.isbndb.com/apidocs/v2
 
 class sel:
@@ -94,6 +96,7 @@ class Menus:
                 with dpg.group(horizontal=True):
                     dpg.add_text("Amount of books: ")
                     dpg.add_input_int(tag="bookAmount",default_value=10,width=100)
+                dpg.add_text("^ right now, only hardcoded due to 10 in execution.")
                 with dpg.group(horizontal=True):
                     dpg.add_text("Export Filename: ")
                     dpg.add_input_text(tag="fileName",default_value="booklist",width=100)
@@ -139,10 +142,83 @@ class Automation:
             return
         
         print("Inputs validated, beginning webdriver automation.")
-        
+        main_content = Automation.getBooks(searchPrefix,bookAmount) # main_content is booklist from the getBooks function
+        if len(main_content) == 0:
+            print("Not continuing to export files.")
+            return
+        # logic for determining what format to export as
+        if exportTXT == True:
+            print("exporting as .txt")
+            Exporting.exportTXT(main_content,fileName)
+        if exportCSV == True:
+            print("exporting as .csv")
+            Exporting.exportCSV(filename=fileName,fields=['ISBN','Title','Author'],content=main_content)
+
     def getBooks(searchPrefix,bookAmount):
         global driver
         driver = WebDriver.start_driver()
+        booklist = []
+        subbooklist = []
+        sel.env(driver,'https://isbnsearch.org/')
+        sel.clear(driver,'xpath',"/html/body/div[1]/form/div/input")
+        sel.type(driver,'xpath',"/html/body/div[1]/form/div/input",searchPrefix)
+        sel.type(driver,'xpath',"/html/body/div[1]/form/div/input",Keys.RETURN)
+        try:
+            sel.find(driver,'xpath',"/html/body/div[1]/div/h1")
+            print("Captcha verification detected.")
+            continueprompt = input("press enter to continue (once you have gone through the captcha)")
+        except:
+            pass
+        try:
+            for i in range(9):
+                print("Book " + str(i+1))
+                subbooklist = []
+                bookisbn = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i+1)+"]/div[2]/p[2]","innerText")
+                bookisbn = bookisbn.replace("ISBN-13: ","")
+                subbooklist.append(bookisbn)
+                booktitle = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i+1)+"]/div[2]/h2/a","innerText")
+                subbooklist.append(booktitle)
+                bookauthor = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i+1)+"]/div[2]/p[1]","innerText")
+                bookauthor = bookauthor.replace("Author: ","")
+                subbooklist.append(bookauthor)
+                booklist.append(subbooklist)
+                # /html/body/div/ul/li[8]/div[2]/h2
+                # /html/body/div/ul/li[8]/div[2]/p[1]
+                # //*[@id="searchresults"]/li[8]/div[2]/p[2]
+
+                # /html/body/div/ul/li[7]/div[2]/p[2]
+
+            print("pressing next button")
+            sel.click(driver,'xpath',"/html/body/div[1]/p/a[2]")
+            try:
+                sel.find(driver,'xpath',"/html/body/div[1]/div/h1")
+                print("Captcha verification detected.")
+                continueprompt = input("press enter to continue (once you have gone through the captcha)")
+            except:
+                pass
+            subbooklist=[]
+            i=1
+            bookisbn = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i)+"]/div[2]/p[2]","innerText")
+            bookisbn = bookisbn.replace("ISBN-13: ","")
+            print(bookisbn)
+            subbooklist.append(bookisbn)
+            booktitle = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i)+"]/div[2]/h2/a","innerText")
+            subbooklist.append(booktitle)
+            print(booktitle)
+            bookauthor = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i)+"]/div[2]/p[1]","innerText")
+            bookauthor = bookauthor.replace("Author: ","")
+            print(bookauthor)
+            subbooklist.append(bookauthor)
+            booklist.append(subbooklist)
+            print(booklist)
+            print("book stuff grabbed.")
+            
+        except:
+            print("There was an issue getting the book list for this prompt, please select another search term and try again.")
+            booklist = []
+        return booklist 
+
+        
     
     
     
@@ -153,84 +229,45 @@ class WebDriver:
         return driver
 
 class Exporting:
-    def exportTXT(main_content):
-        print()
-    
-    def exportCSV(main_content):
-        print()
-
-def getbooks(isbnprefix):
-    global driver
-    global booklist
-    booklist = []
-    subbooklist = []
-    sel.env(driver,'https://isbnsearch.org/')
-    sel.clear(driver,'xpath',"/html/body/div[1]/form/div/input")
-    sel.type(driver,'xpath',"/html/body/div[1]/form/div/input",isbnprefix)
-    sel.type(driver,'xpath',"/html/body/div[1]/form/div/input",Keys.RETURN)
-    try:
-        sel.find(driver,'xpath',"/html/body/div[1]/div/h1")
-        print("Captcha verification detected.")
-        continueprompt = input("press enter to continue (once you have gone through the captcha)")
-    except:
-        pass
-    try:
-        for i in range(9):
-            print("Book " + str(i+1))
-            subbooklist = []
-            bookisbn = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i+1)+"]/div[2]/p[2]","innerText")
-            subbooklist.append(bookisbn)
-            booktitle = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i+1)+"]/div[2]/h2/a","innerText")
-            subbooklist.append(booktitle)
-            bookauthor = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i+1)+"]/div[2]/p[1]","innerText")
-            subbooklist.append(bookauthor)
-            booklist.append(subbooklist)
-            # /html/body/div/ul/li[8]/div[2]/h2
-            # /html/body/div/ul/li[8]/div[2]/p[1]
-            # //*[@id="searchresults"]/li[8]/div[2]/p[2]
-
-            # /html/body/div/ul/li[7]/div[2]/p[2]
-
-        print("pressing next button")
-        sel.click(driver,'xpath',"/html/body/div[1]/p/a[2]")
+    def exportTXT(main_content,fileName):
+        print("exporting book list")
+        fileName = fileName.replace('.txt','')
+        fileName = fileName.replace('.csv','')
+        fileName = fileName + '.txt'
         try:
-            sel.find(driver,'xpath',"/html/body/div[1]/div/h1")
-            print("Captcha verification detected.")
-            continueprompt = input("press enter to continue (once you have gone through the captcha)")
+            with open(fileName,'w') as file:
+                for book in main_content:
+                    for item in book:
+                        file.write(f'{item}\n')
         except:
-            pass
-        subbooklist=[]
-        i=1
-        bookisbn = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i)+"]/div[2]/p[2]","innerText")
-        print(bookisbn)
-        subbooklist.append(bookisbn)
-        booktitle = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i)+"]/div[2]/h2/a","innerText")
-        subbooklist.append(booktitle)
-        print(booktitle)
-        bookauthor = sel.get_value(driver,'xpath',"/html/body/div[1]/ul/li["+str(i)+"]/div[2]/p[1]","innerText")
-        print(bookauthor)
-        subbooklist.append(bookauthor)
-        booklist.append(subbooklist)
-    except:
-        print("There was an issue getting the book list for this prompt, please select another search term.")
-        getprompt()
+            print("There was an issue with exporting")
+    
+    def exportCSV(filename="",fields=[],content=[],extradirectory=""): # extra directory is only if you have a subfolder beyond Outputs.
+        print("exporting")
+        # initialize and declare variables
+        fileName = filename
+        main_content = content
 
-    print(booklist)
-    print("book stuff grabbed.")
-    print("exporting book list")
-    with open("booklist.txt",'w') as file:
-        for book in booklist:
-            for item in book:
-                item = item.replace("Author: ","")
-                item = item.replace("ISBN-13: ","")
-                file.write(f'{item}\n')
-        print("done")
+        fileName = fileName.replace('.txt','')
+        fileName = fileName.replace('.csv','')
+        fileName = fileName + '.csv'
 
-def getprompt():
-    global booklist
-    booklist = []
-    isbnprefix = input("Type in a search prefix: ")
-    getbooks(isbnprefix)
+        
+        try:
+            with open(fileName, 'w', newline='') as file:
+                print("with open executed")
+                write = csv.writer(file)
+                print("csv.writer(file) executed")
+
+                write.writerow(fields) # write the csv fields
+                print("fields written")
+
+                write.writerows(main_content) # write the main contents to the csv file
+            print("CSV exported successfully.")
+        except:
+            print("There was an issue with exporting the CSV file.")
+
+
 
 # start_driver()
 # getprompt()
