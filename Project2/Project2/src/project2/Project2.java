@@ -1,22 +1,15 @@
+package project2;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package project2;
 
-import java.awt.Desktop;
-import java.awt.event.ActionListener;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.event.ActionEvent;
@@ -29,7 +22,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -83,15 +75,7 @@ public class Project2 extends Application {
         //create Vertical box for algorithm selection radio buttons
         VBox radioButtons1 = new VBox();
         radioButtons1.getChildren().addAll(rb1,rb2);
-        
-        
-        
 
-        
-        
-        
-        
-        
         //(x,y) for grid arrangement. Can use this to arrange the radio buttons and other elements
         //contents for getting input type
         
@@ -118,39 +102,49 @@ public class Project2 extends Application {
         menuGrid.add(importedBooklist,1,6);
         
         
-        Scene scene = new Scene(menuGrid, 700, 950);
+        Scene scene = new Scene(menuGrid, 1000, 950);
         
         primaryStage.setTitle("Project 2 - Kevin Savill");
         primaryStage.setScene(scene);
         primaryStage.show();
         
-       
-        
-        
-        
-        
+
         // event listender for the start action button
         startButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                // initialize string variables
+                // initialize needed variables
                 String inputMethod;
                 String textfileDirectory;
                 String pastedText;
                 String bookString;
+                String results;
+                
+                // declare inputMethod using current radio selection from gui
                 inputMethod = inputMethodSelection.getSelectedToggle().toString();
+                // delcare textfileDirectory from filename typed in gui, by default this will be booklist.txt
                 textfileDirectory = textFileLocation.getText();
+                // get the typed in text from the textArea in gui
                 pastedText = bookPaste.getText();
                 System.out.println("Variables initialized and declared, calling beginProcess function");
                 bookString = startFunctions(inputMethod, textfileDirectory, pastedText);
                 System.out.println(bookString);
+                // in startFunctions, if there is an issue with getting the text from either the textArea or text file, "Error" will be returned as the string
+                // this if statement, will set the result fields in the gui to "Error" and stop any further functions from being called.
                 if (bookString == "Error") {
                     outputResults.setText(bookString);
                     importedBooklist.setText("Error");
                     return;
                 }
                 outputResults.setText("Imported");
+                // update the import field in the gui to the list of books
                 importedBooklist.setText(bookString);
+                System.out.println("Going to pass imported list into book class to create book objects.");
+                // pass the bookString to bookToAVL, this function will also handle creating the book objects, and then inserting to AVLTree
+                // once done, any actions taken in the AVLTree for balancing will be returned as a long string with \n which will then be displayed to the results field in gui.
+                results = bookToAVL(bookString);
+                outputResults.setText(results);
+                System.out.println("Main Functions complete.");
                 
             }
         });
@@ -207,6 +201,16 @@ public class Project2 extends Application {
             }
         }
         return bookString;
+    }
+    
+    public String bookToAVL(String bookString) {
+        String results = "";
+        // pass bookString to insertBooks function in Book class to be returned the array of book objects
+        results = Book.insertBooks(bookString);
+        
+        
+        
+        return results;
     }
     
 }

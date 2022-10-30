@@ -1,5 +1,15 @@
+package project2;
+
 public class AVLTree<E extends Comparable<E>> extends BST<E> {
   /** Create a default AVL tree */
+    String results;
+    
+    public void resetResults() {
+        results = "";
+    }
+    public String getResults() {
+        return results;
+    }
   public AVLTree() {
   }
 
@@ -54,17 +64,25 @@ public class AVLTree<E extends Comparable<E>> extends BST<E> {
         case -2:
           if (balanceFactor((AVLTreeNode<E>)A.left) <= 0) {
             balanceLL(A, parentOfA); // Perform LL rotation
+            results = results + "Imbalance condition occurred at inserting ISBN " + A.element + "; fixed in Right Rotation\n";
+            System.out.println("Imbalance condition occurred at inserting ISBN " + A.element + "; fixed in Right Rotation");
           }
           else {
             balanceLR(A, parentOfA); // Perform LR rotation
+            results = results + "Imbalance condition occurred at inserting ISBN " + A.element + "; fixed in LeftRight Rotation\n";
+            System.out.println("Imbalance condition occurred at inserting ISBN " + A.element + "; fixed in LeftRight Rotation");
           }
           break;
         case +2:
           if (balanceFactor((AVLTreeNode<E>)A.right) >= 0) {
             balanceRR(A, parentOfA); // Perform RR rotation
+            results = results + "Imbalance condition occurred at inserting ISBN " + A.element + "; fixed in Left Rotation\n";
+            System.out.println("Imbalance condition occurred at inserting ISBN " + A.element + "; fixed in Left Rotation");
           }
           else {
             balanceRL(A, parentOfA); // Perform RL rotation
+            results = results + "Imbalance condition occurred at inserting ISBN " + A.element + "; fixed in RightLeft Rotation\n";
+            System.out.println("Imbalance condition occurred at inserting ISBN " + A.element + "; fixed in RightLeft Rotation");
           }
       }
     }

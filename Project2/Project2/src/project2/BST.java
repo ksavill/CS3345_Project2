@@ -1,3 +1,5 @@
+package project2;
+
 public class BST<E extends Comparable<E>> {
   protected TreeNode<E> root;
   protected int size = 0;

@@ -1,3 +1,5 @@
+package project2;
+
 public class TestAVLTree {
   public static void main(String[] args) {
    // Create an AVL tree

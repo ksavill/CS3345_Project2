@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from dearpygui import dearpygui as dpg
 # potential resource for improving this script https://www.isbndb.com/apidocs/v2
 
 class sel:
@@ -78,10 +79,85 @@ class sel:
             driver.find_element(By.ID,element)
         if element_type in ['xpath']:
             driver.find_element(By.XPATH,element)
-def start_driver():
-    global driver
-    driver = webdriver.Chrome(r'./ChromeDriver/Windows/chromedriver.exe')
-    return driver
+
+class Menus:
+    def main_menu():
+        if dpg.does_item_exist("main_menu"):
+            dpg.show_item("main_menu")
+        else:
+            with dpg.window(label="BookGrabber Menu",tag="main_menu",width=800,height=1000):
+                dpg.add_text("Book Grabber Automation, website this pulls from is https://isbnsearch.org/")
+                dpg.add_text("")
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Book Search Prefix: ")
+                    dpg.add_input_text(tag="searchPrefix",width=100)
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Amount of books: ")
+                    dpg.add_input_int(tag="bookAmount",default_value=10,width=100)
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Export Filename: ")
+                    dpg.add_input_text(tag="fileName",default_value="booklist",width=100)
+                dpg.add_text("Filetype Exports:")
+                with dpg.group(horizontal=True):
+                    dpg.add_text(".txt:")
+                    dpg.add_checkbox(tag="exportTXT",default_value=True)
+                with dpg.group(horizontal=True):
+                    dpg.add_text(".csv:")
+                    dpg.add_checkbox(tag="exportCSV",default_value=True)
+                dpg.add_text("")
+                dpg.add_button(label="Start Book Grabbing Automation",callback=Automation.inputValidation)
+                    
+class Automation:
+    def warningPopup(popuptext):
+        if dpg.does_item_exist("warningPopup"):
+            Automation.deleteWindow()
+        with dpg.window(label="Error",tag="warningPopup"):
+            dpg.add_text(popuptext,tag="warningText")
+            dpg.add_button(label="Okay",callback=Automation.deleteWindow)
+            
+    def deleteWindow():
+        dpg.delete_item("warningPopup")
+    
+    def inputValidation():
+        global fileName,exportTXT,exportCSV
+        searchPrefix = dpg.get_value("searchPrefix")
+        bookAmount = dpg.get_value("bookAmount")
+        fileName = dpg.get_value("fileName")
+        exportTXT = dpg.get_value("exportTXT")
+        exportCSV = dpg.get_value("exportCSV")
+        if len(searchPrefix) <1:
+            Automation.warningPopup("Search Prefix is empty.")
+            return
+        if bookAmount <1:
+            Automation.warningPopup("You must have at least 1 book being grabbed.")
+            return
+        if len(fileName) <1:
+            Automation.warningPopup("Please input a filename.")
+            return
+        if exportTXT == False and exportCSV == False:
+            Automation.warningPopup("Must select an export type.")
+            return
+        
+        print("Inputs validated, beginning webdriver automation.")
+        
+    def getBooks(searchPrefix,bookAmount):
+        global driver
+        driver = WebDriver.start_driver()
+    
+    
+    
+class WebDriver:
+    def start_driver():
+        global driver
+        driver = webdriver.Chrome(r'./ChromeDriver/Windows/chromedriver.exe')
+        return driver
+
+class Exporting:
+    def exportTXT(main_content):
+        print()
+    
+    def exportCSV(main_content):
+        print()
 
 def getbooks(isbnprefix):
     global driver
@@ -142,7 +218,7 @@ def getbooks(isbnprefix):
     print(booklist)
     print("book stuff grabbed.")
     print("exporting book list")
-    with open("bookobjects.txt",'w') as file:
+    with open("booklist.txt",'w') as file:
         for book in booklist:
             for item in book:
                 item = item.replace("Author: ","")
@@ -156,5 +232,18 @@ def getprompt():
     isbnprefix = input("Type in a search prefix: ")
     getbooks(isbnprefix)
 
-start_driver()
-getprompt()
+# start_driver()
+# getprompt()
+
+if __name__ == '__main__':
+    dpg.create_context()
+    dpg.create_viewport(title="CS3345 BookGrabber Automation - Kevin Savill",width=800,height=1000)
+    dpg.setup_dearpygui()
+
+
+    Menus.main_menu()
+
+    #this goes at the very end of the script
+    dpg.show_viewport()
+    dpg.start_dearpygui()
+    dpg.destroy_context()

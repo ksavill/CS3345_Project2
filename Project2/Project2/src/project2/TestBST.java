@@ -1,3 +1,5 @@
+package project2;
+
 public class TestBST {
   public static void main(String[] args) {
    // Create a BST
