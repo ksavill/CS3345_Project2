@@ -4,8 +4,9 @@ from selenium.webdriver.common.by import By
 from dearpygui import dearpygui as dpg
 import os
 import csv
+import pyperclip
 # potential resource for improving this script https://www.isbndb.com/apidocs/v2
-
+main_content = []
 class sel:
     def get_value(driver,element_type,element,attribute):
         if element_type in ['xpath']:
@@ -109,6 +110,21 @@ class Menus:
                     dpg.add_checkbox(tag="exportCSV",default_value=True)
                 dpg.add_text("")
                 dpg.add_button(label="Start Book Grabbing Automation",callback=Automation.inputValidation)
+                dpg.add_text("\n\n")
+                dpg.add_button(label="Copy results to clipboard",callback=Menus.CopytoClipboard)
+    
+    def CopytoClipboard():
+        global main_content
+        copyString = ""
+        i=0
+        for book in main_content:
+            for item in book:
+                if i!=0:
+                    copyString = copyString + "\n"
+                copyString = copyString + item
+                i+=1
+        pyperclip.copy(copyString)
+        print("String copied.")
                     
 class Automation:
     def warningPopup(popuptext):
@@ -122,7 +138,7 @@ class Automation:
         dpg.delete_item("warningPopup")
     
     def inputValidation():
-        global fileName,exportTXT,exportCSV
+        global fileName,exportTXT,exportCSV,main_content
         searchPrefix = dpg.get_value("searchPrefix")
         bookAmount = dpg.get_value("bookAmount")
         fileName = dpg.get_value("fileName")
