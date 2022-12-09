@@ -96,8 +96,7 @@ class Menus:
                     dpg.add_input_text(tag="searchPrefix",width=100)
                 with dpg.group(horizontal=True):
                     dpg.add_text("Amount of books: ")
-                    dpg.add_input_int(tag="bookAmount",default_value=10,width=100)
-                dpg.add_text("^ right now, only hardcoded due to 10 in execution.")
+                    dpg.add_text("10")
                 with dpg.group(horizontal=True):
                     dpg.add_text("Export Filename: ")
                     dpg.add_input_text(tag="fileName",default_value="booklist",width=100)
@@ -111,19 +110,12 @@ class Menus:
                 dpg.add_text("")
                 dpg.add_button(label="Start Book Grabbing Automation",callback=Automation.inputValidation)
                 dpg.add_text("\n\n")
-                dpg.add_button(label="Copy results to clipboard",callback=Menus.CopytoClipboard)
+                dpg.add_button(label="Copy results to clipboard",callback=Menus.copyToClipboard)
     
-    def CopytoClipboard():
+    def copyToClipboard():
         global main_content
-        copyString = ""
-        i=0
-        for book in main_content:
-            for item in book:
-                if i!=0:
-                    copyString = copyString + "\n"
-                copyString = copyString + item
-                i+=1
-        pyperclip.copy(copyString)
+        copy_string = "\n".join("".join(book) for book in main_content)
+        pyperclip.copy(copy_string)
         print("String copied.")
                     
 class Automation:
@@ -140,37 +132,25 @@ class Automation:
     def inputValidation():
         global fileName,exportTXT,exportCSV,main_content
         searchPrefix = dpg.get_value("searchPrefix")
-        bookAmount = dpg.get_value("bookAmount")
         fileName = dpg.get_value("fileName")
         exportTXT = dpg.get_value("exportTXT")
         exportCSV = dpg.get_value("exportCSV")
-        if len(searchPrefix) <1:
-            Automation.warningPopup("Search Prefix is empty.")
+        if len(searchPrefix) < 1 or len(fileName) < 1 or (not exportTXT and not exportCSV):
+            Automation.warningPopup("Invalid input.")
             return
-        if bookAmount <1:
-            Automation.warningPopup("You must have at least 1 book being grabbed.")
-            return
-        if len(fileName) <1:
-            Automation.warningPopup("Please input a filename.")
-            return
-        if exportTXT == False and exportCSV == False:
-            Automation.warningPopup("Must select an export type.")
-            return
-        
         print("Inputs validated, beginning webdriver automation.")
-        main_content = Automation.getBooks(searchPrefix,bookAmount) # main_content is booklist from the getBooks function
-        if len(main_content) == 0:
+        main_content = Automation.getBooks(searchPrefix)
+        if not main_content:
             print("Not continuing to export files.")
             return
-        # logic for determining what format to export as
-        if exportTXT == True:
-            print("exporting as .txt")
-            Exporting.exportTXT(main_content,fileName)
-        if exportCSV == True:
-            print("exporting as .csv")
-            Exporting.exportCSV(filename=fileName,fields=['ISBN','Title','Author'],content=main_content)
+        if exportTXT:
+            print("Exporting as .txt")
+            Exporting.exportTXT(main_content, fileName)
+        if exportCSV:
+            print("Exporting as .csv")
+            Exporting.exportCSV(filename=fileName, fields=['ISBN', 'Title', 'Author'], content=main_content)
 
-    def getBooks(searchPrefix,bookAmount):
+    def getBooks(searchPrefix):
         global driver
         driver = WebDriver.start_driver()
         booklist = []
@@ -245,41 +225,25 @@ class WebDriver:
         return driver
 
 class Exporting:
-    def exportTXT(main_content,fileName):
-        print("exporting book list")
-        fileName = fileName.replace('.txt','')
-        fileName = fileName.replace('.csv','')
-        fileName = fileName + '.txt'
+    def exportTXT(main_content, fileName):
+        print("Exporting book list to TXT file")
+        fileName = fileName.replace('.txt', '').replace('.csv', '') + '.txt'
         try:
-            with open(fileName,'w') as file:
+            with open(fileName, 'w') as file:
                 for book in main_content:
                     for item in book:
                         file.write(f'{item}\n')
         except:
-            print("There was an issue with exporting")
-    
-    def exportCSV(filename="",fields=[],content=[],extradirectory=""): # extra directory is only if you have a subfolder beyond Outputs.
-        print("exporting")
-        # initialize and declare variables
-        fileName = filename
-        main_content = content
+            print("There was an issue with exporting the TXT file.")
 
-        fileName = fileName.replace('.txt','')
-        fileName = fileName.replace('.csv','')
-        fileName = fileName + '.csv'
-
-        
+    def exportCSV(filename="", fields=[], content=[], extradirectory=""):
+        print("Exporting to CSV file")
+        fileName = filename.replace('.txt', '').replace('.csv', '') + '.csv'
         try:
             with open(fileName, 'w', newline='') as file:
-                print("with open executed")
                 write = csv.writer(file)
-                print("csv.writer(file) executed")
-
-                write.writerow(fields) # write the csv fields
-                print("fields written")
-
-                write.writerows(main_content) # write the main contents to the csv file
-            print("CSV exported successfully.")
+                write.writerow(fields)
+                write.writerows(content)
         except:
             print("There was an issue with exporting the CSV file.")
 
